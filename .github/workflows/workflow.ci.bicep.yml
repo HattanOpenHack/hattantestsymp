@@ -6,31 +6,42 @@ on:
   # pull_request:
   #   branches: [main]
 
+  #=============================================================#
+  # The following Variables should be set on the workflow level #
+  #============================================================ #
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment"
+      environmentName:
+        description: "Name of the Environment"
         required: true
         default: "dev"
-      location:
-        description: "Location"
+      locationName:
+        description: "Name of the deployment Location"
         required: true
         default: "westus"
+      keyVaultName:
+        description: "Environment Key Vault Name"
+        required: true
+        default: "kv-symphony-env"
 
 jobs:
   Validate:
     uses: ./.github/workflows/template.bicep.validate.yml
     with:
-      environment: ${{ github.event.inputs.environment }}
-      location: ${{ github.event.inputs.location }}
+      environmentName: ${{ github.event.inputs.environmentName }}
+      locationName: ${{ github.event.inputs.locationName }}
+      keyVaultName: ${{ github.event.inputs.keyVaultName }}
+      branchName: ${{ github.ref_name }}
     secrets:
-      azure_enviroment_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+      azureEnviromentCredentials: ${{ secrets.AZURE_CREDENTIALS }}
 
   PreviewDeploy:
     needs: Validate
     uses: ./.github/workflows/template.bicep.previewdeploy.yml
     with:
-      environment: ${{ github.event.inputs.environment }}
-      location: ${{ github.event.inputs.location }}
+      environmentName: ${{ github.event.inputs.environmentName }}
+      locationName: ${{ github.event.inputs.locationName }}
+      keyVaultName: ${{ github.event.inputs.keyVaultName }}
+      branchName: ${{ github.ref_name }}
     secrets:
-      azure_enviroment_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+      azureEnviromentCredentials: ${{ secrets.AZURE_CREDENTIALS }}

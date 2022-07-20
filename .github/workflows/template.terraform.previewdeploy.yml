@@ -2,23 +2,20 @@ name: "Template-TF-PreviewDeploy"
 on:
   workflow_call:
     inputs:
-      environment:
-        description: "Environment"
-        required: true
+      environmentName:
         type: string
-        default: "dev"
+        required: true
       terraformVersion:
-        description: "Terraform Version"
-        required: true
-        default: "1.1.7"
         type: string
-      branch:
-        description: "Branch Name"
         required: true
+      keyVaultName:
         type: string
-        default: "main"
+        required: true
+      branchName:
+        type: string
+        required: true
     secrets:
-      azEnvCred:
+      azureEnviromentCredentials:
         required: true
 
 jobs:
@@ -28,12 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ inputs.branchName }}
 
       - name: Setup Toolset
         run: |
           ./setup-azcli.sh
-          chmod +x  ./setup-terraform.sh
           ./setup-terraform.sh ${{ inputs.terraformVersion }}
         working-directory: orchestrators/scripts
         shell: bash
@@ -41,28 +37,27 @@ jobs:
       - uses: Azure/login@v1
         name: Run Azure Login
         with:
-          creds: "${{ secrets.azEnvCred }}"
+          creds: "${{ secrets.azureEnviromentCredentials }}"
 
       - uses: Azure/get-keyvault-secrets@v1
         name: Get KeyVault Secrets
         with:
-          keyvault: "kv-symphony-env"
-          secrets: "clientid, clientsecret, subid, tenantid, staterg, statecontainer, statestorageaccount"
-        id: KvSecrets
+          keyvault: ${{ github.event.inputs.keyVaultName }}
+          secrets: "clientId, clientSecret, subscriptionId, tenantId, stateRg, stateContainer, stateStorageAccount"
+        id: kvSecrets
 
       - name: Run TF plan- Apply
         env:
-          SUBID: ${{ steps.KvSecrets.outputs.subid }}
-          TENANTID: ${{ steps.KvSecrets.outputs.tenantid }}
-          CLIENTID: ${{ steps.KvSecrets.outputs.clientid }}
-          CLIENTSECRET: ${{ steps.KvSecrets.outputs.clientsecret }}
-          STATESTORAGEACCOUNT: ${{ steps.KvSecrets.outputs.statestorageaccount }}
-          STATECONTAINER: ${{ steps.KvSecrets.outputs.statecontainer }}
-          STATERG: ${{ steps.KvSecrets.outputs.staterg }}
-          ENV: ${{ inputs.environment }}
+          ARM_SUBSCRIPTION_ID: ${{ steps.kvSecrets.outputs.subscriptionId }}
+          ARM_TENANT_ID: ${{ steps.kvSecrets.outputs.tenantId }}
+          ARM_CLIENT_ID: ${{ steps.kvSecrets.outputs.clientId }}
+          ARM_CLIENT_SECRET: ${{ steps.kvSecrets.outputs.clientSecret }}
+          STATE_STORAGE_ACCOUNT: ${{ steps.kvSecrets.outputs.stateStorageAccount }}
+          STATE_CONTAINER: ${{ steps.kvSecrets.outputs.stateContainer }}
+          STATE_RG: ${{ steps.kvSecrets.outputs.stateRg }}
+          ENVIRONMENT_NAME: ${{ inputs.environmentName }}
           WORKSPACE_PATH: ${{ github.workspace }}
         run: |
-          chmod +x . ./iac.tf.previewdeploy.sh
           ./iac.tf.previewdeploy.sh
 
         working-directory: orchestrators/scripts
