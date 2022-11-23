@@ -12,8 +12,14 @@ source $SCRIPT_DIR/../../../utilities/http.sh
 ########################################################################################
 
 function load_inputs {
+    $(gh version>/dev/null 2>&1)
+    code=$?
+    if [ "$code" == "127" ]; then
+        _error "github cli is not installed! Please install the gh cli https://cli.github.com/"
+        exit 1
+    fi
+
     _information "Load GitHub Configurations"
-  
     if [ -z "$GH_ORG_NAME" ]; then
         _prompt_input "Enter GitHub Org Name" GH_ORG_NAME
     fi
@@ -79,24 +85,24 @@ function configure_repo {
     _success "Repo '${GH_Repo_NAME}' created."
 }
 
-function configure_credentials {
-    _information "Configure Github Secrets"
+# function configure_credentials {
+#     _information "Configure Github Secrets"
 
-    # 0- Build the secret content from the SP variables.
-    # 1- Get a repository public key
-    # 2- Download libsodium exe
-    # 3- Encript the secret
-    # 4- post the secret.
+#     # 0- Build the secret content from the SP variables.
+#     # 1- Get a repository public key
+#     # 2- Download libsodium exe
+#     # 3- Encript the secret
+#     # 4- post the secret.
 
-}
+# }
 
-function _build_az_secret {
+# function _build_az_secret {
 
-    # {
-    # "clientId": "<GUID>",
-    # "clientSecret": "<GUID>",
-    # "subscriptionId": "<GUID>",
-    # "tenantId": "<GUID>",
-    # (...)}
+#     # {
+#     # "clientId": "<GUID>",
+#     # "clientSecret": "<GUID>",
+#     # "subscriptionId": "<GUID>",
+#     # "tenantId": "<GUID>",
+#     # (...)}
 
-}
+# }
